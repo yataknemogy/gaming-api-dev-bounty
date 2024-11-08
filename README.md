@@ -36,7 +36,7 @@ This API is designed for a gaming platform that enables users to register, place
 
 1. **Start the server**:
     ```bash
-    npm start
+    npm run dev
     ```
 
 2. **Available Routes**:

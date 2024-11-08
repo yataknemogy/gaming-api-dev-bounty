@@ -15,7 +15,7 @@ This API is designed for a gaming platform that enables users to register, place
 
 1. Clone the repository:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/yataknemogy/gaming-api-dev-bounty.git
     ```
 2. Navigate into the project directory:
     ```bash

@@ -9,6 +9,7 @@ import betRoutes from './routes/betRoutes';
 import challengeRoutes from './routes/challengeRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
 import socialShareRoutes from './routes/socialShareRoutes';
+import ratingRoutes from './routes/ratingRoutes';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/bets', betRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/social-share', socialShareRoutes);
+app.use('/api/ratings', ratingRoutes);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     const error = new AppError(`Route ${req.originalUrl} not found`, 404);

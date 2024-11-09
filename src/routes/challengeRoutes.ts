@@ -1,10 +1,20 @@
 import express from 'express';
-import { createChallenge, getChallengeById, getChallengeShareLinkHandler } from '../controllers/challengeController';
+import {
+    createChallengeController,
+    joinChallengeController,
+    completeChallengeController,
+    expireChallengesController,
+    getPublicChallengesController,
+    getChallengeStatisticsController
+} from '../controllers/challengeController';
 
 const router = express.Router();
 
-router.post('/challenge', createChallenge);
-router.get('/challenge/:id', getChallengeById);
-router.get('/challenge/share/:slug', getChallengeShareLinkHandler);
+router.post('/', createChallengeController);
+router.post('/:challengeId/join', joinChallengeController);
+router.post('/:challengeId/complete', completeChallengeController);
+router.post('/expire', expireChallengesController);
+router.get('/public', getPublicChallengesController);
+router.get('/:challengeId/statistics', getChallengeStatisticsController);
 
 export default router;

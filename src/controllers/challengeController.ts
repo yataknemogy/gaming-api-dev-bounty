@@ -1,67 +1,82 @@
-import { Request, Response, NextFunction } from 'express';
-import { createChallengeService, getChallengeByIdService, getChallengeShareLink } from '../services/challengeService';
-import { CLUSTER_TYPES, ICreateChallenge } from '../types/types';
-import { GenericError } from '../errors/errorHandling';
+import { Request, Response } from 'express';
+import {
+    createChallenge,
+    joinChallenge,
+    completeChallenge,
+    expireChallenges,
+    getPublicChallenges,
+    getChallengeStatistics
+} from '../services/challengeService'; 
+import { AppError } from '../utils/errorHandler';
 
-export const createChallenge = async (req: Request, res: Response, next: NextFunction) => {
+export const createChallengeController = async (req: Request, res: Response) => {
     try {
-        const challengeData: ICreateChallenge = req.body;
-        const clusterUrl = req.query.cluster as CLUSTER_TYPES;
-
-        if (!clusterUrl) {
-            throw new GenericError('Cluster URL is required.', 400);
-        }
-
-        const result = await createChallengeService(clusterUrl, challengeData);
-
-        if (result.error) {
-            throw new GenericError(`Error creating challenge: ${result.error}`, 500);
-        }
-
-        res.status(201).json(result.data);
+        const { title, description, creatorId, stakeAmount, category, isPrivate, startTime, endTime } = req.body;
+        const challenge = await createChallenge(title, description, creatorId, stakeAmount, category, isPrivate, startTime, endTime);
+        res.status(201).json(challenge);
     } catch (error) {
-        next(error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to create challenge', error });
+        }
     }
 };
 
-export const getChallengeById = async (req: Request, res: Response, next: NextFunction) => {
+export const joinChallengeController = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const clusterUrl = req.query.cluster as CLUSTER_TYPES;
-
-        if (!clusterUrl) {
-            throw new GenericError('Cluster URL is required.', 400);
-        }
-
-        const result = await getChallengeByIdService(clusterUrl, Number(id));
-
-        if (result.error) {
-            throw new GenericError(`Error fetching challenge: ${result.error}`, 500);
-        }
-
-        res.status(200).json(result.data);
+        const { challengeId } = req.params;
+        const { userId } = req.body;
+        const challenge = await joinChallenge(challengeId, userId);
+        res.json(challenge);
     } catch (error) {
-        next(error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to join challenge', error });
+        }
     }
 };
 
-export const getChallengeShareLinkHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const completeChallengeController = async (req: Request, res: Response) => {
     try {
-        const { slug } = req.params;
-        const clusterUrl = req.query.cluster as CLUSTER_TYPES;
-
-        if (!clusterUrl || !slug) {
-            throw new GenericError('Cluster URL and slug are required.', 400);
-        }
-
-        const result = await getChallengeShareLink(clusterUrl, slug);
-
-        if (result.error) {
-            throw new GenericError(`Failed to fetch challenge share link: ${result.error}`, 500);
-        }
-
-        res.status(200).json({ shareLink: result.data });
+        const { challengeId } = req.params;
+        const { proof, isSuccess } = req.body;
+        const challenge = await completeChallenge(challengeId, proof, isSuccess);
+        res.json(challenge);
     } catch (error) {
-        next(error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to complete challenge', error });
+        }
+    }
+};
+
+export const expireChallengesController = async (_req: Request, res: Response) => {
+    try {
+        await expireChallenges();
+        res.json({ message: 'Expired challenges processed' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to expire challenges', error });
+    }
+};
+
+export const getPublicChallengesController = async (_req: Request, res: Response) => {
+    try {
+        const challenges = await getPublicChallenges();
+        res.json(challenges);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch public challenges', error });
+    }
+};
+
+export const getChallengeStatisticsController = async (req: Request, res: Response) => {
+    try {
+        const { challengeId } = req.params;
+        const statistics = await getChallengeStatistics(challengeId);
+        res.json(statistics);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch challenge statistics', error });
     }
 };

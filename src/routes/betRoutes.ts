@@ -1,9 +1,14 @@
 import express from 'express';
-import { placeBet, getBetStatus } from '../controllers/betController';
+import {
+    createBetController,
+    updateBetStatusController,
+    getUserBetStatisticsController
+} from '../controllers/betController';
 
 const router = express.Router();
 
-router.post('/', placeBet);
-router.get('/:betID/status', getBetStatus);
+router.post('/', createBetController);
+router.post('/:betId/status', updateBetStatusController);
+router.get('/user/:userId/statistics', getUserBetStatisticsController);
 
 export default router;

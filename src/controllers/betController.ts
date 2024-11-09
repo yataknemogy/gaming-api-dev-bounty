@@ -1,62 +1,50 @@
-import { Request, Response, NextFunction } from 'express';
-import { getBetStatusService, placeBetService } from '../services/betService';
-import { IPlaceBet, CLUSTER_TYPES } from '../types/types';
-import Joi from 'joi';
+import { Request, Response } from 'express';
+import {
+    createBet,
+    updateBetStatus,
+    getUserBetStatistics
+} from '../services/betService';
+import { AppError } from '../utils/errorHandler';
 
-const betSchema = Joi.object({
-    cluster: Joi.string().valid(...Object.values(CLUSTER_TYPES)).required(),
-    betAmount: Joi.number().positive().required(),
-    currency: Joi.string().valid('USDC', 'SOL', 'BONK', 'SEND').required(),
-    challengeID: Joi.number().integer().positive().required(),
-    userAddress: Joi.string().required(),
-    opponentAddress: Joi.string().optional(),
-});
-
-export const placeBet = async (req: Request, res: Response, next: NextFunction) => {
+export const createBetController = async (req: Request, res: Response) => {
     try {
-        const { error, value: betData } = betSchema.validate(req.body);
-        if (error) {
-            res.status(400).json({ message: 'Invalid bet data', details: error.details });
-        }
-
-        const clusterUrl = req.body.cluster as CLUSTER_TYPES;
-        if (!Object.values(CLUSTER_TYPES).includes(clusterUrl)) {
-            throw new Error('Invalid cluster URL');
-        }
-
-        const result = await placeBetService(clusterUrl, betData as IPlaceBet);
-
-        if (result.error) {
-            res.status(500).json({ message: 'Failed to place bet', error: result.error });
-        }
-
-        res.status(201).json({ message: 'Bet placed successfully', data: result.data });
+        const { userId, challengeId, amount, cryptoAddress, transactionHash, odds } = req.body;
+        const bet = await createBet(userId, challengeId, amount, cryptoAddress, transactionHash, odds);
+        res.status(201).json(bet);
     } catch (error) {
-        next(error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to create bet', error });
+        }
     }
 };
 
-export const getBetStatus = async (req: Request, res: Response, next: NextFunction) => {
+export const updateBetStatusController = async (req: Request, res: Response) => {
     try {
-        const betID = parseInt(req.params.betID, 10);
-
-        if (isNaN(betID)) {
-            res.status(400).json({ message: 'Invalid bet ID. Must be a number.' });
-        }
-
-        const clusterUrl = req.query.cluster as CLUSTER_TYPES;
-        if (!Object.values(CLUSTER_TYPES).includes(clusterUrl)) {
-            throw new Error('Invalid cluster URL');
-        }
-
-        const result = await getBetStatusService(clusterUrl, betID);
-
-        if (result.error) {
-            res.status(500).json({ message: 'Failed to fetch bet status', error: result.error });
-        }
-
-        res.status(200).json({ message: 'Bet status retrieved successfully', data: result.data });
+        const { betId } = req.params;
+        const { isWon, winnerAddress } = req.body;
+        const bet = await updateBetStatus(betId, isWon, winnerAddress);
+        res.json(bet);
     } catch (error) {
-        next(error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to update bet status', error });
+        }
+    }
+};
+
+export const getUserBetStatisticsController = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+        const statistics = await getUserBetStatistics(userId);
+        res.json(statistics);
+    } catch (error) {
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'Failed to retrieve user bet statistics', error });
+        }
     }
 };

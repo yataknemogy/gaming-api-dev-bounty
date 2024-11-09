@@ -1,43 +1,49 @@
 import express, { Request, Response, NextFunction } from 'express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
 import dotenv from 'dotenv';
-import 'express-async-errors';
-
-import connectDB from './config/db';
-import challengeRoutes from './routes/challengeRoutes';
-import descriptionRoutes from './routes/descriptionRoutes';
-import transactionRoutes from './routes/transactionRoutes';
-import tournamentRoutes from './routes/tournamentRoutes';
+import connectToDatabase from './config/db';
+import initializeCollections from './config/initializeCollections';
+import { errorHandler, AppError } from './utils/errorHandler';
+import { logEvent } from './utils/logger';
+import userRoutes from './routes/userRoutes';
 import betRoutes from './routes/betRoutes';
-import notificationRoutes from './routes/notificationRoutes';
+import challengeRoutes from './routes/challengeRoutes';
+import tournamentRoutes from './routes/tournamentRoutes';
+import socialShareRoutes from './routes/socialShareRoutes';
+import ratingRoutes from './routes/ratingRoutes';
 
 dotenv.config();
 
-connectDB();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
-app.use(cors());
-app.use(bodyParser.json());
+connectToDatabase()
+    .then(() => initializeCollections())
+    .catch((error) => {
+        console.error('Database connection or collection initialization failed:', error);
+        process.exit(1);
+    });
 
-app.use('/api/challenges', challengeRoutes);
-app.use('/api/descriptions', descriptionRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/tournament', tournamentRoutes);
+app.get('/', (req: Request, res: Response) => {
+    res.send('Welcome to the Gaming API!');
+    logEvent('Root Accessed', { message: 'Root route was accessed' }, 'info');
+});
+
+app.use('/api/users', userRoutes);
 app.use('/api/bets', betRoutes);
-app.use('/api/notification', notificationRoutes);
+app.use('/api/challenges', challengeRoutes);
+app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/social-share', socialShareRoutes);
+app.use('/api/ratings', ratingRoutes);
 
-app.use((req: Request, res: Response) => {
-    res.status(404).json({ message: 'Resource not found' });
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const error = new AppError(`Route ${req.originalUrl} not found`, 404);
+    next(error);
 });
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error('Error:', err.stack);
-    res.status(500).json({ message: 'An internal server error occurred' });
-});
+app.use(errorHandler);
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+    logEvent('Server Started', { port: PORT }, 'info');
 });

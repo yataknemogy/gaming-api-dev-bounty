@@ -19,7 +19,7 @@ This API is designed for a gaming platform that enables users to register, place
     ```
 2. Navigate into the project directory:
     ```bash
-    cd gaming-api
+    cd gaming-api-dev-bounty
     ```
 3. Install dependencies:
     ```bash

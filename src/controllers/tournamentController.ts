@@ -1,65 +1,62 @@
 import { Request, Response } from 'express';
-import {
-    createTournament,
-    addParticipant,
-    advanceToNextRound,
-    endTournament
-} from '../services/tournamentService';
-import { AppError } from '../utils/errorHandler';
+import { createTournamentService, getTournamentByIdService } from '../services/tournamentService';
+import { ICreateTournament, CLUSTER_TYPES } from '../types/types';
+import { calculateTimeRange } from '../utils/time';
+import { validateParameters } from '../utils/validation';
+import { GenericError } from '../errors/errorHandling';
 
-export const createTournamentController = async (req: Request, res: Response) => {
+export const createTournament = async (req: Request, res: Response) => {
     try {
-        const { name, description, prizePool } = req.body;
-        const tournament = await createTournament(name, description, prizePool);
-        res.status(201).json(tournament);
+        const { TournamentName, TournamentDescription, StartDate, Duration, cluster } = req.body;
+
+        validateParameters('TournamentName', !!TournamentName, 'Tournament name is required');
+        validateParameters('StartDate', !!StartDate, 'Start date is required');
+        validateParameters('Duration', !!Duration, 'Duration is required');
+
+        const clusterUrl = cluster as CLUSTER_TYPES;
+        if (!Object.values(CLUSTER_TYPES).includes(clusterUrl)) {
+            throw new GenericError('Invalid cluster URL', 400);
+        }
+
+        const { startDate, endDate } = calculateTimeRange(StartDate, Duration);
+
+        const tournamentData: ICreateTournament = {
+            ...req.body,
+            StartDate: startDate,
+            EndDate: endDate,
+        };
+
+        const result = await createTournamentService(clusterUrl, tournamentData);
+        res.status(201).json(result);
     } catch (error) {
-        if (error instanceof AppError) {
+        if (error instanceof GenericError) {
             res.status(error.statusCode).json({ message: error.message });
         } else {
-            res.status(500).json({ message: 'Failed to create tournament', error });
+            res.status(500).json({ message: 'Error creating tournament', error });
         }
     }
 };
 
-export const addParticipantController = async (req: Request, res: Response) => {
+export const getTournamentById = async (req: Request, res: Response) => {
     try {
-        const { tournamentId } = req.params;
-        const { userId } = req.body;
-        const tournament = await addParticipant(tournamentId, userId);
-        res.json(tournament);
-    } catch (error) {
-        if (error instanceof AppError) {
-            res.status(error.statusCode).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: 'Failed to add participant', error });
-        }
-    }
-};
+        const { id } = req.params;
+        const { cluster } = req.query;
+        const tournamentId = Number(id);
 
-export const advanceToNextRoundController = async (req: Request, res: Response) => {
-    try {
-        const { tournamentId } = req.params;
-        const tournament = await advanceToNextRound(tournamentId);
-        res.json(tournament);
-    } catch (error) {
-        if (error instanceof AppError) {
-            res.status(error.statusCode).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: 'Failed to advance to the next round', error });
-        }
-    }
-};
+        validateParameters('Tournament ID', !isNaN(tournamentId) && tournamentId > 0, 'Invalid tournament ID');
+        const clusterUrl = cluster as CLUSTER_TYPES;
 
-export const endTournamentController = async (req: Request, res: Response) => {
-    try {
-        const { tournamentId } = req.params;
-        const tournament = await endTournament(tournamentId);
-        res.json(tournament);
+        if (!Object.values(CLUSTER_TYPES).includes(clusterUrl)) {
+            throw new GenericError('Invalid cluster URL', 400);
+        }
+
+        const result = await getTournamentByIdService(clusterUrl, tournamentId);
+        res.status(200).json(result);
     } catch (error) {
-        if (error instanceof AppError) {
+        if (error instanceof GenericError) {
             res.status(error.statusCode).json({ message: error.message });
         } else {
-            res.status(500).json({ message: 'Failed to end tournament', error });
+            res.status(500).json({ message: 'Error fetching tournament by ID', error });
         }
     }
 };

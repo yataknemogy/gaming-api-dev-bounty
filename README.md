@@ -1,85 +1,232 @@
+# Catoff on Blinks API: Quick Guide
 
-# Gaming API
+The Catoff on Blinks API allows developers to create and manage mini-games within the Catoff ecosystem. Here is the essential information to effectively use the API.
 
-This API is designed for a gaming platform that enables users to register, place bets, participate in challenges and tournaments, and share achievements on social media.
+## Base URL
+All requests are made to:
+```
+https://api.catoff.xyz/v1
+```
 
-## Technologies Used
+## Authentication
+An API key is required and should be included in the headers of each request.
 
-- **Node.js**
-- **Express**
-- **MongoDB** with Mongoose
-- **TypeScript**
-- **dotenv** for environment variable management
+**Headers:**
+- `x-api-key`: Your API key.
 
-## Installation
+## Main Endpoints
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yataknemogy/gaming-api-dev-bounty.git
-    ```
-2. Navigate into the project directory:
-    ```bash
-    cd gaming-api
-    ```
-3. Install dependencies:
-    ```bash
-    npm install
-    ```
-4. Create a `.env` file in the root folder and add the following variables:
-    ```plaintext
-    PORT=4000
-    MONGO_URI=<your-mongodb-uri>
-    JWT_SECRET=<your-jwt-secret>
-    ```
+The endpoints described below can be used depending on the goals and requirements of the developer.
 
-## Usage
+### 1. Create Challenge
+**POST** `/challenges`
 
-1. **Start the server**:
-    ```bash
-    npm run dev
-    ```
+Creates a new game challenge. The request body should include the challenge parameters.
 
-2. **Available Routes**:
+```javascript
+import axios from 'axios';
 
-    ### User Routes
-    - **POST** `/api/users/register` - Register a new user
-    - **GET** `/api/users/:publicKey` - Get user by public key
-    - **POST** `/api/users/:publicKey/deposit` - Deposit funds to user balance
-    - **GET** `/api/users/top-users` - Get top users by total bet amount
+const createChallenge = async (challengeData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/challenges', challengeData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Challenge created:', response.data);
+  } catch (error) {
+    console.error('Error creating challenge:', error);
+  }
+};
+```
 
-    ### Bet Routes
-    - **POST** `/api/bets` - Create a new bet
-    - **POST** `/api/bets/:betId/status` - Update bet status (win/loss)
-    - **GET** `/api/bets/user/:userId/statistics` - Get bet statistics for a user
+### 2. Place Bet
+**POST** `/bets`
 
-    ### Challenge Routes
-    - **POST** `/api/challenges` - Create a new challenge
-    - **POST** `/api/challenges/:challengeId/join` - Join a challenge
-    - **POST** `/api/challenges/:challengeId/complete` - Complete a challenge
-    - **GET** `/api/challenges/public` - Get public challenges
+Places a bet on a challenge. The response contains the bet ID and transaction signature.
 
-    ### Tournament Routes
-    - **POST** `/api/tournaments` - Create a new tournament
-    - **POST** `/api/tournaments/:tournamentId/participants` - Add participant to a tournament
-    - **POST** `/api/tournaments/:tournamentId/advance` - Advance to the next round
-    - **POST** `/api/tournaments/:tournamentId/end` - End the tournament
+```javascript
+import axios from 'axios';
 
-    ### Social Share Routes
-    - **POST** `/api/social-share/generate` - Generate social media content for achievements
+const placeBet = async (betData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/bets', betData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Bet placed:', response.data);
+  } catch (error) {
+    console.error('Error placing bet:', error);
+  }
+};
+```
 
-3. **Testing**:
-    Use a tool like Postman to send HTTP requests to the routes listed above.
+### 3. Create Transaction
+**POST** `/transactions`
 
-## Project Structure
+Creates a transaction to transfer funds. You need to specify the sender and recipient public keys, currency, and amount.
 
-- `src/`
-  - `controllers/`: Route handlers for the API endpoints
-  - `models/`: Mongoose models for MongoDB collections
-  - `services/`: Core business logic and database operations
-  - `routes/`: API route definitions
-  - `utils/`: Utility functions, such as error handling and logging
-  - `config/`: Database connection and collection initialization
+```javascript
+import axios from 'axios';
 
-## License
+const createTransaction = async (transactionData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/transactions', transactionData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Transaction created:', response.data);
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+  }
+};
+```
 
-This project is licensed under the MIT License.
+### 4. Get Notifications
+**GET** `/notifications/:userId`
+
+Returns notifications for a specific user, including type, content, and read status.
+
+```javascript
+import axios from 'axios';
+
+const getNotifications = async (userId) => {
+  try {
+    const response = await axios.get(`https://api.catoff.xyz/v1/notifications/${userId}`, {
+      headers: { 'x-api-key': 'YOUR_API_KEY' },
+    });
+    console.log('User notifications:', response.data);
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+  }
+};
+```
+
+### 5. Create Tournament
+**POST** `/tournament`
+
+Creates a new tournament with the specified data.
+
+```javascript
+import axios from 'axios';
+
+const createTournament = async (tournamentData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/tournament', tournamentData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Tournament created:', response.data);
+  } catch (error) {
+    console.error('Error creating tournament:', error);
+  }
+};
+```
+
+### 6. Get Tournament by ID
+**GET** `/tournament/:id`
+
+Returns information about a tournament by its ID.
+
+```javascript
+import axios from 'axios';
+
+const getTournamentById = async (tournamentId) => {
+  try {
+    const response = await axios.get(`https://api.catoff.xyz/v1/tournament/${tournamentId}`, {
+      headers: { 'x-api-key': 'YOUR_API_KEY' },
+    });
+    console.log('Tournament details:', response.data);
+  } catch (error) {
+    console.error('Error getting tournament by ID:', error);
+  }
+};
+```
+
+### 7. Generate AI Description
+**POST** `/generate-description-x-api-key/`
+
+Generates a description using AI based on the provided data.
+
+```javascript
+import axios from 'axios';
+
+const generateAIDescription = async (name, participationType) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/generate-description-x-api-key/', {
+      prompt: name,
+      participation_type: participationType,
+      result_type: 'voting',
+    }, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('AI Description generated:', response.data);
+  } catch (error) {
+    console.error('Error generating AI description:', error);
+  }
+};
+```
+
+### 8. Create Challenge
+**POST** `/challenge`
+
+Creates a new challenge.
+
+```javascript
+import axios from 'axios';
+
+const createChallenge = async (challengeData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/challenge', challengeData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Challenge created:', response.data);
+  } catch (error) {
+    console.error('Error creating challenge:', error);
+  }
+};
+```
+
+### 9. Get Challenge by ID
+**GET** `/challenge/:id`
+
+Returns information about a challenge by its ID.
+
+```javascript
+import axios from 'axios';
+
+const getChallengeById = async (challengeId) => {
+  try {
+    const response = await axios.get(`https://api.catoff.xyz/v1/challenge/${challengeId}`, {
+      headers: { 'x-api-key': 'YOUR_API_KEY' },
+    });
+    console.log('Challenge details:', response.data);
+  } catch (error) {
+    console.error('Error getting challenge by ID:', error);
+  }
+};
+```
+
+### 10. Create Bet
+**POST** `/bets`
+
+Allows creating a bet on an existing challenge.
+
+```javascript
+import axios from 'axios';
+
+const createBet = async (betData) => {
+  try {
+    const response = await axios.post('https://api.catoff.xyz/v1/bets', betData, {
+      headers: { 'x-api-key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+    });
+    console.log('Bet created:', response.data);
+  } catch (error) {
+    console.error('Error creating bet:', error);
+  }
+};
+```
+
+## Error Handling
+All errors contain:
+- `data`: Always null.
+- `error`: Error message describing the issue.
+
+## Conclusion
+This API allows developers to integrate exciting mini-games, tournaments, and other features into the Catoff ecosystem. For more details, contact the Catoff team.
+

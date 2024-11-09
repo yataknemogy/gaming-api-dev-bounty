@@ -1,16 +1,9 @@
 import express from 'express';
-import {
-    createTournamentController,
-    addParticipantController,
-    advanceToNextRoundController,
-    endTournamentController
-} from '../controllers/tournamentController';
+import { createTournament, getTournamentById } from '../controllers/tournamentController';
 
 const router = express.Router();
 
-router.post('/', createTournamentController);
-router.post('/:tournamentId/participants', addParticipantController);
-router.post('/:tournamentId/advance', advanceToNextRoundController);
-router.post('/:tournamentId/end', endTournamentController);
+router.post('/', createTournament);
+router.get('/:id', getTournamentById);
 
 export default router;
